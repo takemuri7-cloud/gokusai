@@ -1,0 +1,1300 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d1422">
+<title>超高彩度画像変換ツール 極彩ーゴクサイー</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b111e;
+  --surface:#151f32;
+  --surface-alt:#1c2942;
+  --border:#2e3e5c;
+  --text:#f3f6fe;
+  --muted:#a6b5cc;
+  --accent:#63a4ff;
+  --accent-strong:#3b82f6;
+  --vivid:#f472b6;
+  --good:#6ee7b7;
+  --warn:#fcd34d;
+  --alert:#fca5a5;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:radial-gradient(circle at 15% 0%, #172544 0%, var(--bg) 55%);
+  color:var(--text);
+  font:14.5px/1.6 system-ui,-apple-system,"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif;
+}
+main{max-width:1240px;margin:0 auto;padding:20px 18px 56px}
+header{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:20px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+}
+.title-wrap h1{
+  font-size:clamp(22px,3.2vw,30px);
+  margin:0 0 4px;
+  letter-spacing:-.02em;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.badge{
+  font-size:12px;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#2563eb,#db2777);
+  color:#fff;
+  letter-spacing:.02em;
+}
+.badge-gpu{
+  font-size:12px;
+  font-weight:650;
+  padding:4px 11px;
+  border-radius:8px;
+  background:#132742;
+  border:1px solid #355886;
+  color:#b9d6ff;
+}
+.lead{color:var(--muted);margin:0;font-size:13.5px}
+.panels{
+  display:grid;
+  grid-template-columns:minmax(320px,420px) minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+.panel{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+  padding:18px;
+  min-width:0;
+  box-shadow:0 10px 28px rgba(0,0,0,.28);
+}
+.side{display:grid;gap:16px}
+.main-col{display:grid;gap:16px}
+h2{
+  font-size:16.5px;
+  margin:0 0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.step-num{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  background:var(--accent-strong);
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  margin-right:6px;
+}
+.group{margin:0 0 14px}
+.group:last-child{margin-bottom:0}
+label{font-weight:650;display:block;margin-bottom:6px;font-size:13.5px}
+input[type=file],select{
+  width:100%;
+  font:inherit;
+  color:var(--text);
+  border:1px solid #4d6285;
+  border-radius:9px;
+  padding:9px 11px;
+  background:#0e1728;
+}
+select{cursor:pointer}
+input[type=file]{font-size:12.5px}
+button{
+  border:0;
+  border-radius:10px;
+  padding:11px 14px;
+  font:inherit;
+  font-weight:750;
+  background:linear-gradient(135deg,#60a5fa,#3b82f6);
+  color:#061224;
+  cursor:pointer;
+  touch-action:manipulation;
+  transition:transform .08s ease,opacity .15s ease,filter .15s ease;
+}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:active:not(:disabled){transform:translateY(1px)}
+button.secondary{
+  background:#2a3952;
+  color:#f0f5ff;
+  border:1px solid #455a7d;
+  font-weight:650;
+}
+button.preset-btn{
+  padding:7px 10px;
+  font-size:12.5px;
+  border-radius:8px;
+  background:#1f2e47;
+  color:#dce8ff;
+  border:1px solid #3c5278;
+  font-weight:650;
+}
+button.preset-btn.active{
+  background:linear-gradient(135deg,#2563eb,#db2777);
+  color:#fff;
+  border-color:#f472b6;
+}
+button:disabled{opacity:.42;cursor:not-allowed}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.buttons>button{flex:1;min-width:120px}
+.preset-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-bottom:14px;
+}
+.hint{color:var(--muted);font-size:12.5px;margin:5px 0}
+.stat{font-variant-numeric:tabular-nums}
+.safe{color:var(--good)}
+.warn{color:var(--warn)}
+.alert{color:var(--alert)}
+#drop{
+  border:2px dashed #4f6891;
+  border-radius:12px;
+  padding:12px;
+  background:rgba(16,26,44,.55);
+  transition:border-color .15s,background .15s;
+}
+#drop.over{border-color:#93c5fd;background:#1e3152}
+.sample-bar{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.sample-bar button{
+  flex:1;
+  padding:6px 9px;
+  font-size:12px;
+  border-radius:7px;
+}
+.stage{
+  background:repeating-conic-gradient(#0d1320 0% 25%, #121a2b 0% 50%) 50% / 20px 20px;
+  border:1px solid #364866;
+  border-radius:12px;
+  overflow:auto;
+  min-height:320px;
+  max-height:650px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+}
+#preview{
+  position:relative;
+  width:min(100%,860px);
+  margin:auto;
+  overflow:hidden;
+  line-height:0;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+}
+#after,#before{width:100%;height:auto;display:block}
+#before{position:absolute;inset:0;clip-path:inset(0 50% 0 0)}
+#splitLine{
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:50%;
+  width:2px;
+  background:#fff;
+  box-shadow:0 0 8px rgba(0,0,0,.9);
+  pointer-events:none;
+}
+.tag-overlay{
+  position:absolute;
+  top:10px;
+  padding:3px 9px;
+  border-radius:6px;
+  font-size:11.5px;
+  font-weight:700;
+  background:rgba(8,15,28,.78);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.2);
+  pointer-events:none;
+  line-height:1.4;
+}
+.tag-before{left:10px}
+.tag-after{right:10px;background:rgba(37,99,235,.85)}
+#empty{
+  color:#8da0be;
+  min-height:300px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:24px;
+}
+.range{display:flex;gap:10px;align-items:center;margin-top:10px}
+.range input{flex:1;accent-color:var(--accent)}
+.range label{white-space:nowrap;margin:0;font-size:12.5px;min-width:115px}
+.slider-row{
+  display:grid;
+  grid-template-columns:125px 1fr 48px;
+  gap:8px;
+  align-items:center;
+  margin-bottom:9px;
+}
+.slider-row label{margin:0;font-size:12.5px;color:#dbe7ff}
+.slider-row input[type=range]{width:100%;accent-color:var(--accent)}
+.slider-val{
+  text-align:right;
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+  color:var(--accent);
+  font-weight:700;
+}
+progress{
+  width:100%;
+  height:12px;
+  accent-color:#34d399;
+  display:block;
+  margin:10px 0;
+  border-radius:99px;
+}
+#status{
+  white-space:pre-wrap;
+  color:#e2ecff;
+  min-height:42px;
+  background:#0e1729;
+  border:1px solid #293b59;
+  border-radius:9px;
+  padding:9px 11px;
+  font-size:12.5px;
+}
+#printInfo{
+  background:#0f2136;
+  border:1px solid #284669;
+  border-radius:9px;
+  padding:9px 11px;
+  margin-top:8px;
+}
+.hex-inspector{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#0e1626;
+  border:1px solid #2b3d5c;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-size:12.5px;
+}
+.swatch-pair{display:flex;align-items:center;gap:8px}
+.swatch{
+  width:22px;
+  height:22px;
+  border-radius:5px;
+  border:1px solid rgba(255,255,255,.35);
+  background:#000;
+}
+.check-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:8px;
+  font-size:13px;
+  cursor:pointer;
+}
+.check-row input{width:16px;height:16px;accent-color:var(--accent)}
+.save-ready-box{
+  margin-top:12px;
+  padding:12px;
+  border-radius:10px;
+  background:#0f243c;
+  border:1px solid #3b82f6;
+}
+.save-ready-box p{margin:0 0 8px;font-size:12.5px;color:#dbeafe}
+.save-thumb-wrap{
+  background:#09111e;
+  border:1px solid #2b4266;
+  border-radius:8px;
+  padding:6px;
+  text-align:center;
+}
+.save-thumb-wrap img{
+  max-width:100%;
+  max-height:130px;
+  height:auto;
+  border-radius:4px;
+  cursor:context-menu;
+}
+a.btn-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  border-radius:9px;
+  padding:9px 12px;
+  font-weight:750;
+  font-size:13px;
+  background:linear-gradient(135deg,#34d399,#10b981);
+  color:#041f18;
+  width:100%;
+  margin-bottom:8px;
+}
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(5,10,20,.75);
+  display:grid;
+  place-items:center;
+  z-index:100;
+  padding:16px;
+}
+.modal-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  max-width:440px;
+  width:100%;
+  padding:20px;
+  box-shadow:0 16px 40px rgba(0,0,0,.6);
+}
+.modal-card h3{margin:0 0 8px;font-size:17px}
+.modal-card p{margin:0 0 16px;color:var(--muted);font-size:13.5px}
+.foot{
+  color:var(--muted);
+  font-size:12px;
+  margin:22px 0 0;
+  border-top:1px solid var(--border);
+  padding-top:14px;
+}
+a{color:#93c5fd}
+.hidden{display:none!important}
+@media(max-width:860px){
+  main{padding:14px 10px 40px}
+  .panels{grid-template-columns:1fr}
+  .panel{padding:14px}
+  .stage{min-height:220px;max-height:480px}
+}
+
+.brand{display:block;font-size:clamp(38px,4vw,52px);letter-spacing:.12em;line-height:1.4;background:linear-gradient(100deg,#ffd889,#ff86c8,#9faaff);background-clip:text;-webkit-background-clip:text;color:transparent}
+.brand span{font-size:15px;letter-spacing:.1em;margin-left:10px;color:#c8d3e8}
+.title-wrap h1{display:block;font-size:14px;font-weight:500;letter-spacing:.08em}
+.title-wrap .badge{display:inline-block;margin:8px 0}
+.engine-info{border-left:3px solid #e899cf;padding:8px 10px;background:#202239;font-size:12px;overflow-wrap:anywhere}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0}
+.detail-grid span{display:block;font-size:12px;margin-bottom:6px;color:#c2d0e5}
+.detail-scroll{overflow:auto;background:repeating-conic-gradient(#253044 0% 25%,#1b2535 0% 50%) 50% /16px 16px;border:1px solid #3a4c69;border-radius:8px}
+.detail-scroll canvas{display:block;max-width:none}
+.main-col{position:sticky;top:16px}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #f8c4e0;outline-offset:3px}
+#printInfo{white-space:pre-line}
+@media(max-width:860px){.main-col{position:static}.detail-grid{grid-template-columns:1fr}.brand{font-size:38px}}
+
+.panels{display:flex;flex-direction:column;gap:20px}.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%}.workbench{display:grid;grid-template-columns:minmax(310px,390px) minmax(0,1fr);gap:18px;width:100%;align-items:start}.main-col{position:sticky;top:12px;min-width:0}#savePanel{width:100%}main{max-width:1440px}.finish-tools{border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:16px}.tool-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tool-row button{flex:1;padding:8px;font-size:12px}.tool-row input,.tool-row select{flex:1;min-width:120px;background:#0e1728;color:var(--text);border:1px solid #4d6285;border-radius:8px;padding:8px;width:auto}.finish-tools input[type=range]{width:100%;accent-color:var(--accent)}[hidden]{display:none!important}#detailPanel summary{cursor:pointer;padding:10px 0;color:#c8dcff}button:disabled{opacity:.45;cursor:default}.stage{min-height:240px}#preview{cursor:crosshair}
+@media(max-width:860px){.setup-grid{grid-template-columns:1fr}.workbench{display:flex;flex-direction:column}.workbench>.main-col{order:-1;width:100%;position:sticky;top:0;z-index:5}.workbench>.main-col>.panel{padding:9px}.stage{min-height:140px;max-height:29vh}.stage #preview{width:auto;max-width:100%}#after,#before{max-height:29vh;width:auto;max-width:100%;object-fit:contain}#before{width:100%;height:100%}.main-col h2{font-size:12px;margin-bottom:6px}.main-col #viewHelp{display:none}.range{margin-top:5px}#finishPanel{width:100%}.slider-row{grid-template-columns:110px 1fr 40px}.workbench{gap:10px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="title-wrap">
+    <h1>
+      超高彩度画像変換ツール<br><strong class="brand">極彩<span>ーゴクサイー</span></strong>
+      <span class="badge">GOKUSAI 3.1 · AI超解像 × 鮮やかな仕上げ</span>
+    </h1>
+    <p class="lead">鮮やかに、細部まで。写真・チラシ・イラストを、ブラウザ内で高画質化。画像ファイルはアップロードしません。AIモデルの取得にはネット接続が必要です。</p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <div id="gpuBadge" class="badge-gpu">演算エンジン確認中…</div>
+    <button type="button" id="downloadAppHtml" class="preset-btn" title="Chromeで直接開けるHTMLファイルとして保存します">📥 このアプリ(HTML)をPCに保存</button>
+  </div>
+</header>
+
+<div class="panels">
+  <div class="setup-grid"><section class="panel">
+      <h2><span><span class="step-num">1</span>画像を選ぶ</span></h2>
+      <div id="drop">
+        <input id="file" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/*" aria-label="画像ファイルを選択">
+        <p class="hint">ドラッグ＆ドロップ対応（PNG / JPEG / WebP / BMP）</p>
+      </div>
+      <div class="sample-bar">
+        <button type="button" id="loadSampleFlyer" class="secondary">お試しチラシ画像を読み込む</button>
+        <button type="button" id="loadSamplePhoto" class="secondary">お試し写真風画像を読み込む</button>
+      </div>
+      <p id="sourceInfo" class="hint stat">画像を選択してください。</p>
+    </section>
+
+    <section class="panel">
+      <h2><span><span class="step-num">2</span>AI超解像エンジン設定</span></h2>
+      <div class="group">
+        <label for="purpose">何を仕上げますか？</label>
+        <select id="purpose"><option value="flyer">チラシ・文字のある画像</option><option value="photo">写真・人物・商品</option><option value="illustration">イラスト・AI生成画像</option></select>
+        <p class="hint">用途に合わせて、おすすめの処理と仕上げを設定します。</p>
+        <label for="mode">高画質化の方法</label>
+        <select id="mode">
+          <option value="flyer" selected>チラシ向けAI（文字周辺を原画像と合成）</option>
+          <option value="realesrgan_pro">質感重視AI：Real-ESRGAN x4plus（約67MB）</option>
+          <option value="realesrgan_fast">軽量AI：Real-ESRGAN General（約5MB）</option>
+          <option value="photo">別のAI：ESRGAN Thick</option>
+          <option value="faithful">AIなし：補間拡大＋色・輪郭補正</option>
+        </select>
+        <p id="modeHint" class="hint"></p>
+        <label class="check-row"><input id="protectText" type="checkbox" checked>文字周辺を原画像と合成して、描き変わりを抑える</label>
+        <p class="hint">小さな文字・数字・QRコードは、完成後も原画像と照合してください。</p>
+      </div>
+
+      <div class="group">
+        <label for="scale">拡大倍率</label>
+        <select id="scale">
+          <option value="1">等倍（色と輪郭を補正）</option>
+          <option value="2">縦横2倍（画素数4倍）</option>
+          <option value="4" selected>縦横4倍（画素数16倍）</option>
+        </select>
+        <p id="targetInfo" class="hint stat">画像を選択すると出力画素数を表示します。</p>
+      </div>
+
+      <div class="group" hidden="hidden">
+        <label for="paper">印刷する用紙</label>
+        <select id="paper">
+          <option value="A3" selected>A3（420 × 297 mm）</option>
+          <option value="A4">A4（297 × 210 mm）</option>
+          <option value="A2">A2（594 × 420 mm）</option>
+        </select>
+        <div id="printInfo" class="hint">画像を選択するとA3印刷時の実効dpiを計算します。</div>
+      </div>
+
+      <div class="group" hidden="hidden"><label for="layout">保存する画像の形</label>
+        <select id="layout"><option value="native">元の縦横比・拡大後の画素数を保つ</option><option value="contain">用紙サイズに収める（白い余白あり）</option><option value="cover">用紙全面に合わせる（はみ出た部分を切る）</option></select>
+        <label for="dpi" style="margin-top:10px">印刷用の解像度</label><select id="dpi"><option value="300">300 dpi（標準）</option><option value="350">350 dpi（高精細）</option><option value="200">200 dpi（大きなポスター向け）</option></select>
+      </div>
+      <div class="buttons">
+        <button type="button" id="run" disabled>AI高画質化を開始</button>
+        <button type="button" id="cancel" class="secondary hidden">中止</button>
+      </div>
+      <progress id="progress" value="0" max="100" class="hidden" aria-label="処理進捗"></progress>
+      <p id="engineInfo" class="engine-info">使用エンジン：未処理</p>
+      <p id="status" role="status" aria-live="polite">初回はAIモデルを取得します。利用できる場合はモデルを端末に保存し、次回に再利用します。</p>
+    </section>
+
+    </div><div class="workbench"><section class="panel" id="finishPanel">
+      <h2>
+        <span><span class="step-num">3</span>鮮やかさ・輪郭を仕上げる</span>
+        <button type="button" id="resetColor" class="preset-btn">リセット</button>
+      </h2>
+      <p class="hint" style="margin-top:-6px;margin-bottom:10px">軽量プレビューで調整し、保存時に原寸で仕上げます。細部は右側の原寸比較で確認できます。</p>
+
+      <div class="finish-tools"><div class="tool-row"><button type="button" id="undoColor" class="preset-btn">↶ 戻す</button><button type="button" id="redoColor" class="preset-btn">↷ やり直す</button></div><div class="tool-row"><button type="button" id="pinA" class="preset-btn">今の仕上げをAに記憶</button><button type="button" id="showA" class="preset-btn">Aを見る</button><button type="button" id="showB" class="preset-btn">Bに戻る</button></div><p id="abStatus" class="hint" role="status">Aに記憶してから調整すると、仕上げを比べられます。</p><label for="overall">仕上げ全体の強さ <span id="overallValue">100%</span></label><input id="overall" type="range" min="0" max="100" value="100"><div class="tool-row"><button type="button" id="candidateNatural" class="preset-btn">候補：自然</button><button type="button" id="candidateVivid" class="preset-btn">候補：鮮やか</button><button type="button" id="candidateGokusai" class="preset-btn">候補：極彩</button></div><label for="favoriteName">お気に入りの仕上げ</label><div class="tool-row"><input id="favoriteName" maxlength="30" placeholder="仕事用イラスト・私用写真など" aria-label="お気に入りの名前"><button type="button" id="saveFavorite" class="preset-btn">登録</button></div><div class="tool-row"><select id="favorites" aria-label="登録した仕上げ"><option value="">お気に入りを選択</option></select><button type="button" id="loadFavorite" class="preset-btn">適用</button><button type="button" id="deleteFavorite" class="preset-btn">削除</button></div><p id="favoriteStatus" class="hint" role="status">この端末・ブラウザ内に設定を保存します。</p></div><div class="preset-grid">
+        <button type="button" id="presetFlyer" class="preset-btn active">🌈 極彩・鮮やか</button>
+        <button type="button" id="presetShaki" class="preset-btn">✨ 自然な鮮やかさ</button>
+        <button type="button" id="presetText" class="preset-btn">📝 文字・輪郭</button>
+        <button type="button" id="presetNone" class="preset-btn">🎨 色補正なし</button>
+      </div>
+
+      <div class="slider-row">
+        <label for="vibrance">自然な彩度 (Vibrance)</label>
+        <input type="range" id="vibrance" min="-50" max="100" value="35">
+        <span id="vibranceVal" class="slider-val">+35</span>
+      </div>
+      <div class="slider-row">
+        <label for="saturation">彩度ブースト (高彩度)</label>
+        <input type="range" id="saturation" min="-50" max="100" value="20">
+        <span id="saturationVal" class="slider-val">+25</span>
+      </div>
+      <div class="slider-row">
+        <label for="contrast">コントラスト (明暗差)</label>
+        <input type="range" id="contrast" min="-50" max="100" value="12">
+        <span id="contrastVal" class="slider-val">+18</span>
+      </div>
+      <div class="slider-row">
+        <label for="clarity">クラリティ (立体感)</label>
+        <input type="range" id="clarity" min="0" max="100" value="16">
+        <span id="clarityVal" class="slider-val">25</span>
+      </div>
+      <div class="slider-row">
+        <label for="sharpness">輪郭のくっきり感</label>
+        <input type="range" id="sharpness" min="0" max="100" value="35">
+        <span id="sharpnessVal" class="slider-val">45</span>
+      </div>
+      <div class="slider-row">
+        <label for="brightness">明るさ (Brightness)</label>
+        <input type="range" id="brightness" min="-50" max="50" value="2">
+        <span id="brightnessVal" class="slider-val">+4</span>
+      </div>
+      <div class="slider-row">
+        <label for="temperature">色温度 (黄ばみ除去↔暖色)</label>
+        <input type="range" id="temperature" min="-50" max="50" value="0">
+        <span id="temperatureVal" class="slider-val">-8</span>
+      </div>
+    </section>
+
+    <div class="main-col">
+    <section class="panel">
+      <h2>
+        <span>仕上がりを比較（左：元画像 ／ 右：AI超解像＋高彩度）</span>
+        <div style="display:flex;gap:6px">
+          <button type="button" id="holdCompare" class="preset-btn" disabled>長押しで元画像を表示</button>
+        </div>
+      </h2>
+      <div class="stage" id="stage">
+        <div id="empty">
+          <div>
+            <p style="font-size:15px;font-weight:700;color:#d6e4ff;margin:0 0 6px">画像を選択して、高画質化を開始してください</p>
+            <p class="hint">処理後、中央の白い境界スライダーで「細部」と「鮮やかな発色」を比較できます。</p>
+          </div>
+        </div>
+        <div id="preview" class="hidden">
+          <img id="after" alt="処理後の高彩度・高解像度画像">
+          <img id="before" alt="処理前の元画像">
+          <div id="splitLine" aria-hidden="true"></div>
+          <span class="tag-overlay tag-before">BEFORE (元画像)</span>
+          <span class="tag-overlay tag-after">AFTER (極彩)</span>
+        </div>
+      </div>
+
+      <div class="range">
+        <label for="comparison">元画像 ↔ 完成比較</label>
+        <input type="range" id="comparison" min="0" max="100" value="50" disabled aria-label="元画像と完成画像の比較位置">
+        <span id="comparisonValue" class="stat" style="min-width:40px;text-align:right">50%</span>
+      </div>
+
+      <details id="detailPanel" class="hidden">
+        <summary>原寸で文字・細部を比較する</summary><p id="detailLabel" class="hint">画像をクリックすると、その場所を原寸で比較できます。</p>
+        <div class="detail-grid"><div><span>元画像を同じ倍率で表示</span><div class="detail-scroll"><canvas id="detailBefore"></canvas></div></div><div><span>極彩・原寸の仕上がり</span><div class="detail-scroll"><canvas id="detailAfter"></canvas></div></div></div>
+      </details>
+      <p class="hint" id="viewHelp">全体表示は軽量プレビューです。原寸比較は保存と同じ補正で表示します。処理中はタブを閉じないでください。</p>
+    </section>
+  </div>
+</div><section class="panel" id="savePanel">
+      <h2><span><span class="step-num">4</span>完成画像を保存</span></h2>
+      <div class="group" hidden="hidden">
+        <label for="format">保存ファイル形式</label>
+        <select id="format"><option value="image/png">PNG</option></select></div>
+      <label class="check-row" hidden="hidden">
+        <input type="checkbox" id="embedDpi" checked>
+        <span>PNGに選択した印刷解像度の情報を付ける</span>
+      </label>
+      <div class="buttons">
+        <button type="button" id="save" disabled>高画質PNGを保存</button>
+      </div>
+      <p id="resultInfo" class="hint stat">処理完了後に保存できます。</p>
+      <div id="saveFallbackBox" class="save-ready-box hidden">
+        <a id="directDownloadLink" class="btn-link" href="#saveFallbackBox" download="shakiPro_output.png">⬇️ ここをクリックしてファイルを保存</a>
+        <p>保存が始まらない場合は上のリンクを押すか、下の画像を右クリックして保存してください。</p>
+        <div class="save-thumb-wrap">
+          <img id="saveReadyImg" alt="右クリックして名前を付けて画像を保存してください">
+        </div>
+      </div>
+    </section>
+  </div>
+
+<footer class="foot"><p><strong>鮮やかさと、原画像の大切な情報を。</strong><br>AI超解像は細部を推定する処理です。元画像にない文字や情報を正確に復元するものではありません。画像はブラウザ内で処理します。画面と印刷の発色は、プリンター・用紙・印刷設定によって変わります。</p>
+<details><summary>使用技術・ライセンス</summary><p>Real-ESRGAN（Wang Xintaoほか／BSD-3-Clause）、ONNX Runtime Web（Microsoft／MIT）、UpscalerJS・ESRGAN Thick（Kevin Scott／MIT）、TensorFlow.js（Apache-2.0）を使用。AIモデルはHugging Face、演算ライブラリはjsDelivrから取得します。</p><p><a href="https://github.com/xinntao/Real-ESRGAN" target="_blank" rel="noopener">Real-ESRGAN</a> · <a href="https://onnxruntime.ai/" target="_blank" rel="noopener">ONNX Runtime</a> · <a href="https://upscalerjs.com/" target="_blank" rel="noopener">UpscalerJS</a></p></details>
+</footer>
+</main>
+
+<script>
+'use strict';
+// Capture the clean document before scripts, previews or temporary URLs are added.
+const APP_HTML = '<!doctype html>\n' + document.documentElement.outerHTML;
+const el = id => document.getElementById(id);
+const nextFrame = () => new Promise(r => setTimeout(r, 0));
+const log = s => { el('status').textContent = s; };
+const MAX_SIDE = 16384, LIMIT_PIXELS = 48_000_000;
+const paperSizes = { A3: [420,297], A4: [297,210], A2: [594,420] };
+const MODELS = {
+  realesrgan_pro: { name:'Real-ESRGAN x4plus', size:67167157, tile:128,
+    url:'https://huggingface.co/portmanphoto/portman2-enhance/resolve/main/realesrgan-x4plus.onnx',
+    sha:'be1806cc2e003babad184a9f4501f95b276176efc6c900ec5b073bdafccd25b5' },
+  realesrgan_fast: { name:'Real-ESRGAN General-x4v3', size:4871181, tile:192,
+    url:'https://huggingface.co/Heliosoph/realesrgan-onnx/resolve/main/realesr-general-x4v3.onnx',
+    sha:'09b757accd747d7e423c1d352b3e8f23e77cc5742d04bae958d4eb8082b76fa4' }
+};
+const SLIDER_KEYS = ['vibrance','saturation','contrast','clarity','sharpness','brightness','temperature'];
+const PRESETS = {
+  flyer:{vibrance:35,saturation:20,contrast:12,clarity:16,sharpness:35,brightness:2,temperature:0},
+  shaki:{vibrance:20,saturation:8,contrast:8,clarity:10,sharpness:25,brightness:0,temperature:0},
+  text:{vibrance:12,saturation:5,contrast:10,clarity:8,sharpness:30,brightness:0,temperature:0},
+  none:{vibrance:0,saturation:0,contrast:0,clarity:0,sharpness:0,brightness:0,temperature:0}
+};
+let srcImage=null, sourceUrl=null, originalCanvas=null, baseCanvas=null;
+let previewCanvas=null, beforePreview=null, previewUrl=null, beforeUrl=null;
+let working=false, exporting=false, stopController=null, hasWebGPU=false;
+let fileBase='image', openSequence=0, generation=0, revision=0, renderedRevision=-1;
+let previewBusy=false, previewTimer=null, detailTimer=null, detailSequence=0;
+let processed=null, actualEngine='', fallbackNote='', exportCache=null;
+let scripts=new Map(), sessions=new Map(), upscalers=new Map(), runtimePromise=null;
+let lensX=0.5, lensY=0.5;
+function disposeCanvas(c){ if(c){ c.width=0; c.height=0; } }
+function revoke(u){ if(u) URL.revokeObjectURL(u); }
+function newCanvas(w,h,read=false){
+  w=Math.round(w); h=Math.round(h);
+  if(w<1||h<1||w>MAX_SIDE||h>MAX_SIDE||w*h>LIMIT_PIXELS) throw Error(`画像サイズ ${w} × ${h} px は処理上限を超えます。倍率または印刷解像度を下げてください。`);
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d',{willReadFrequently:read});
+  if(!g) throw Error('画像用メモリを確保できませんでした。');
+  return [c,g];
+}
+function assertActive(){ if(stopController?.signal.aborted) throw new DOMException('中止しました','AbortError'); }
+function params(){ return Object.fromEntries(SLIDER_KEYS.map(k=>[k,Number(el(k).value)])); }
+function updateControls(){
+  const busy=working||exporting;
+  for(const id of ['file','mode','scale','loadSampleFlyer','loadSamplePhoto','purpose','protectText']) el(id).disabled=busy;
+  for(const k of SLIDER_KEYS) el(k).disabled=busy;
+  for(const id of ['presetFlyer','presetShaki','presetText','presetNone','resetColor','paper','layout','dpi','format','embedDpi']) el(id).disabled=busy;
+  el('run').disabled=busy||!srcImage;
+  el('cancel').classList.toggle('hidden',!working);
+  el('save').disabled=busy||!baseCanvas||!geometryCurrent();
+  el('holdCompare').disabled=busy||!baseCanvas;
+  el('comparison').disabled=!baseCanvas;
+}
+function geometryCurrent(){ return processed&&processed.scale===Number(el('scale').value)&&processed.mode===el('mode').value&&processed.protect===el('protectText').checked; }
+function invalidateExport(){
+  revision++; revoke(exportCache?.url); exportCache=null;
+  el('saveFallbackBox').classList.add('hidden');
+  el('directDownloadLink').removeAttribute('href'); el('saveReadyImg').removeAttribute('src');
+}
+function clearResult(){
+  generation++; invalidateExport(); renderedRevision=-1; processed=null;
+  disposeCanvas(baseCanvas); baseCanvas=null;
+  disposeCanvas(previewCanvas); previewCanvas=null; disposeCanvas(beforePreview); beforePreview=null;
+  revoke(previewUrl); previewUrl=null; revoke(beforeUrl); beforeUrl=null;
+  el('after').removeAttribute('src'); el('before').removeAttribute('src');
+  el('preview').classList.add('hidden'); el('empty').classList.remove('hidden');
+  el('detailPanel').classList.add('hidden');
+  el('engineInfo').textContent='使用エンジン：未処理';
+  el('resultInfo').textContent='処理完了後に保存できます。';
+  updateControls();
+}
+function readImage(url){ return new Promise((resolve,reject)=>{ const i=new Image(); i.onload=()=>resolve(i); i.onerror=()=>reject(Error('画像を読み込めませんでした。')); i.src=url; }); }
+function asBlob(c,type='image/png',quality=1){ return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('画像を書き出せませんでした。')),type,quality)); }
+async function openFile(file){
+  if(working||exporting||!file) return;
+  const seq=++openSequence; clearResult(); srcImage=null;
+  disposeCanvas(originalCanvas); originalCanvas=null; revoke(sourceUrl); sourceUrl=null;
+  updateControls();
+  const u=URL.createObjectURL(file);
+  try{
+    if(file.type&&!file.type.startsWith('image/')) throw Error('画像ファイルを選択してください。');
+    const im=await readImage(u);
+    if(seq!==openSequence){ revoke(u); return; }
+    const [c,g]=newCanvas(im.naturalWidth,im.naturalHeight,true); g.drawImage(im,0,0);
+    srcImage=im; sourceUrl=u; originalCanvas=c;
+    fileBase=(file.name.replace(/\.[^.]+$/,'').replace(/[^\w\-\u3040-\u30ff\u3400-\u9fff]/g,'_')||'image').slice(0,60);
+    el('sourceInfo').textContent=`元画像：${im.naturalWidth.toLocaleString()} × ${im.naturalHeight.toLocaleString()} px ／ ${(file.size/1048576).toFixed(2)} MB`;
+    refreshInfo(); log('画像を読み込みました。「高画質化を開始」を押してください。');
+  }catch(e){ if(seq===openSequence){srcImage=null;el('sourceInfo').textContent='画像を選択してください。';el('targetInfo').textContent='画像を選択すると出力画素数を表示します。';log('読み込みエラー：'+e.message);} revoke(u); }
+  updateControls();
+}
+function paperMM(w,h){ const [a,b]=paperSizes[el('paper').value]; return w>=h?[a,b]:[b,a]; }
+function exportGeometry(w,h){
+  const dpi=Number(el('dpi').value), layout=el('layout').value;
+  if(layout==='native') return {w,h,dpi,layout};
+  const [pw,ph]=paperMM(w,h);
+  return {w:Math.round(pw/25.4*dpi),h:Math.round(ph/25.4*dpi),dpi,layout};
+}
+function refreshInfo(){
+  if(!srcImage) return;
+  const w=srcImage.naturalWidth*Number(el('scale').value), h=srcImage.naturalHeight*Number(el('scale').value);
+  el('targetInfo').textContent=`${srcImage.naturalWidth.toLocaleString()} × ${srcImage.naturalHeight.toLocaleString()} → ${w.toLocaleString()} × ${h.toLocaleString()} px（${(w*h/1e6).toFixed(1)} MP）`;
+  const [pw,ph]=paperMM(w,h), layout=el('layout').value;
+  const dpi=(layout==='cover'?Math.min(w/pw,h/ph):Math.max(w/pw,h/ph))*25.4;
+  const ex=exportGeometry(w,h);
+  el('printInfo').textContent=`${el('paper').value} ${w>=h?'横':'縦'}：${layout==='native'?'比率を保って用紙に収めた場合':layout==='contain'?'余白あり':'全面・端をトリミング'} 約 ${Math.round(dpi)} ppi。${dpi>=300?'画素数の目安を満たしています。':'細部は原寸表示でも確認してください。'}\n保存予定：${ex.w.toLocaleString()} × ${ex.h.toLocaleString()} px。解像度の数値だけで実際の画質は保証されません。`;
+  el('printInfo').className='hint '+(dpi>=300?'safe':'warn');
+  if(baseCanvas&&!geometryCurrent()) log('拡大条件が変わりました。「高画質化を開始」で反映してください。');
+  updateControls();
+}
+function modeText(){
+  const hints={realesrgan_pro:'質感の復元を重視する約67MBモデル。初回は取得に時間がかかります。',realesrgan_fast:'約5MBの軽量モデル。大きな画像や速度を重視する場合に。',photo:'別系統のESRGAN Thickで処理します。',flyer:'文字周辺で原画像の補間結果を混ぜ、AIによる描き変わりを抑えます。文字の修復を保証する機能ではありません。',faithful:'AIによる描き足しをせず、補間拡大と色・輪郭補正で仕上げます。'};
+  el('modeHint').textContent=hints[el('mode').value]||'';
+  el('run').textContent='高画質化を開始';
+}
+async function detectHardware(){
+  try{hasWebGPU=!!(await navigator.gpu?.requestAdapter());}catch{}
+  el('gpuBadge').textContent=hasWebGPU?'GPU利用可能（処理時に確認）':'CPU / WebGLで処理';
+}
+function loadScript(url){
+  if(scripts.has(url)) return scripts.get(url);
+  const p=new Promise((resolve,reject)=>{
+    const s=document.createElement('script'); let timer;
+    const fail=()=>{ clearTimeout(timer);s.remove();scripts.delete(url);reject(Error('演算ライブラリを取得できませんでした。ネット接続を確認してください。')); };
+    s.src=url; s.onload=()=>{clearTimeout(timer);resolve();};s.onerror=fail;
+    timer=setTimeout(fail,60000);document.head.appendChild(s);
+  }); scripts.set(url,p); return p;
+}
+async function modelStore(key,bytes){
+  // Persistent cache is best effort; file:// or private browsing may deny access.
+  if(!window.indexedDB) return null;
+  return new Promise(resolve=>{
+    let req; try{req=indexedDB.open('gokusai-models-v1',1);}catch{resolve(null);return;}
+    req.onupgradeneeded=()=>req.result.createObjectStore('models');
+    req.onerror=()=>resolve(null); req.onblocked=()=>resolve(null);
+    req.onsuccess=()=>{
+      const db=req.result; let t;
+      try{t=db.transaction('models',bytes?'readwrite':'readonly');}catch{db.close();resolve(null);return;}
+      const q=bytes?t.objectStore('models').put(bytes,key):t.objectStore('models').get(key);
+      let value=null;q.onsuccess=()=>{value=q.result;};
+      t.oncomplete=()=>{db.close();resolve(value);};t.onerror=t.onabort=()=>{db.close();resolve(null);};
+    };
+  });
+}
+async function verifiedBytes(bytes,info){
+  if(bytes.byteLength!==info.size) throw Error('AIモデルのサイズが一致しません。');
+  if(crypto.subtle){
+    const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
+    if(hash!==info.sha) throw Error('AIモデルの検証に失敗しました。');
+  }
+  return bytes;
+}
+async function fetchModel(info){
+  const cached=await modelStore(info.sha); assertActive();
+  if(cached){try{return await verifiedBytes(cached,info);}catch{ /* Fetch a fresh verified copy. */ }}
+  log(`${info.name} を取得しています（約${Math.round(info.size/1e6)} MB）…`);
+  const signal=stopController.signal; const ctrl=new AbortController();
+  const abort=()=>ctrl.abort();signal.addEventListener('abort',abort,{once:true});
+  let timer=setTimeout(()=>ctrl.abort(),90000);
+  try{
+    const r=await fetch(info.url,{signal:ctrl.signal}); if(!r.ok) throw Error('モデル取得 HTTP '+r.status);
+    const chunks=[];let n=0;const reader=r.body.getReader();
+    while(true){
+      const {done,value}=await reader.read();if(done)break;assertActive();chunks.push(value);n+=value.length;
+      clearTimeout(timer);timer=setTimeout(()=>ctrl.abort(),90000);
+      if(n>info.size) throw Error('AIモデルのサイズが想定を超えました。');
+      el('progress').value=Math.min(18,Math.round(n/info.size*18));
+      log(`${info.name} 取得中：${(n/1e6).toFixed(1)} / ${(info.size/1e6).toFixed(1)} MB`);
+    }
+    const b=new Uint8Array(n);let offset=0;for(const c of chunks){b.set(c,offset);offset+=c.length;}
+    const bytes=await verifiedBytes(b.buffer,info);assertActive();
+    await modelStore(info.sha,bytes);return bytes;
+  }catch(e){if(signal.aborted)assertActive();if(ctrl.signal.aborted)throw Error('AIモデル取得がタイムアウトしました。');throw e;}
+  finally{clearTimeout(timer);signal.removeEventListener('abort',abort);}
+}
+async function ortSession(key){
+  if(sessions.has(key)) return sessions.get(key);
+  if(!runtimePromise){runtimePromise=(async()=>{
+    await loadScript('https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.all.min.js');
+    if(!window.ort)throw Error('ONNX Runtimeの初期化に失敗しました。');
+    ort.env.wasm.wasmPaths='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+    ort.env.wasm.numThreads=window.crossOriginIsolated?Math.min(4,navigator.hardwareConcurrency||2):1;
+  })().catch(e=>{runtimePromise=null;throw e;});}
+  await runtimePromise;assertActive(); const info=MODELS[key];const bytes=await fetchModel(info);assertActive();
+  log(info.name+' を初期化しています…');await nextFrame();
+  let session,provider='CPU / WASM';
+  if(hasWebGPU){try{session=await ort.InferenceSession.create(bytes,{executionProviders:['webgpu'],graphOptimizationLevel:'all'});provider='WebGPU';}catch{assertActive();}}
+  if(!session) session=await ort.InferenceSession.create(bytes,{executionProviders:['wasm'],graphOptimizationLevel:'all'});
+  const result={session,provider};sessions.set(key,result);return result;
+}
+function markEngine(name,note=''){
+  actualEngine=name;fallbackNote=note;
+  el('engineInfo').textContent=`使用エンジン：${name}${note?' ／ '+note:''}`;
+}
+async function scaleONNX(input,key,factor){
+  const {session,provider}=await ortSession(key);assertActive();
+  markEngine(MODELS[key].name+' / '+provider,fallbackNote);
+  const tile=MODELS[key].tile,pad=16,w=input.width,h=input.height;
+  const [out,g]=newCanvas(w*factor,h*factor,true);
+  const countX=Math.ceil(w/tile),countY=Math.ceil(h/tile),total=countX*countY;
+  let done=0;
+  try{
+    for(let ty=0;ty<countY;ty++)for(let tx=0;tx<countX;tx++){
+      assertActive();const x=tx*tile,y=ty*tile,bw=Math.min(tile,w-x),bh=Math.min(tile,h-y);
+      const sx=Math.max(0,x-pad),sy=Math.max(0,y-pad),ex=Math.min(w,x+bw+pad),ey=Math.min(h,y+bh+pad),tw=ex-sx,th=ey-sy;
+      const [c,cg]=newCanvas(tw,th,true);cg.drawImage(input,sx,sy,tw,th,0,0,tw,th);
+      const rgba=cg.getImageData(0,0,tw,th).data,n=tw*th,fd=new Float32Array(n*3);
+      // Composite RGB against white for inference, then restore the independently scaled alpha.
+      for(let i=0;i<n;i++){const a=rgba[i*4+3]/255;for(let k=0;k<3;k++)fd[k*n+i]=(rgba[i*4+k]*a+255*(1-a))/255;}
+      let tensor,result,outTile;
+      try{
+        tensor=new ort.Tensor('float32',fd,[1,3,th,tw]);result=await session.run({[session.inputNames[0]]:tensor});assertActive();
+        const ot=result[session.outputNames[0]],dims=ot.dims;
+        if(dims.length!==4||dims[0]!==1||dims[1]!==3||dims[2]!==th*4||dims[3]!==tw*4)throw Error('AIモデルの出力形式が一致しません。');
+        const data=ot.data,ow=tw*4,oh=th*4,plane=ow*oh;
+        let og;[outTile,og]=newCanvas(ow,oh,true);
+        // Interpolate alpha separately; recover straight RGB from the white composite.
+        og.imageSmoothingQuality='high';og.drawImage(c,0,0,ow,oh);
+        const im=og.getImageData(0,0,ow,oh),d=im.data;
+        for(let i=0;i<plane;i++){const a=d[i*4+3]/255;for(let k=0;k<3;k++)d[i*4+k]=a>0.015?Math.max(0,Math.min(255,(data[k*plane+i]*255-255*(1-a))/a)):0;}
+        og.putImageData(im,0,0);
+        g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+        // Downsample each tile directly. Never allocate a whole-image intermediate at 4×.
+        g.drawImage(outTile,(x-sx)*4,(y-sy)*4,bw*4,bh*4,x*factor,y*factor,bw*factor,bh*factor);
+      }finally{tensor?.dispose?.();if(result)for(const t of Object.values(result))t.dispose?.();disposeCanvas(c);disposeCanvas(outTile);}
+      done++;el('progress').value=20+Math.round(done/total*65);log(`${actualEngine}\n画像を復元しています：${done} / ${total} 区画`);await nextFrame();
+    }
+    return out;
+  }catch(e){disposeCanvas(out);throw e;}
+}
+async function scaleThick(input,factor){
+  const key=String(factor);let ai=upscalers.get(key);
+  if(!ai){
+    await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+    await loadScript(`https://cdn.jsdelivr.net/npm/@upscalerjs/esrgan-thick@1.0.0/dist/umd/models/esrgan-thick/src/x${factor}/index.min.js`);
+    await loadScript('https://cdn.jsdelivr.net/npm/upscaler@1.0.0/dist/browser/umd/upscaler.min.js');assertActive();
+    const model=window[`ESRGANThick${factor}x`];if(!model||!window.Upscaler)throw Error('ESRGAN Thickを読み込めませんでした。');
+    ai=new Upscaler({model});upscalers.set(key,ai);
+  }
+  markEngine(`ESRGAN Thick ${factor}x / ${tf.getBackend()}`,fallbackNote);
+  const [out,g]=newCanvas(input.width*factor,input.height*factor,true);const tile=128,pad=12;
+  const nx=Math.ceil(input.width/tile),ny=Math.ceil(input.height/tile);let done=0;
+  try{
+    for(let iy=0;iy<ny;iy++)for(let ix=0;ix<nx;ix++){
+      assertActive();const x=ix*tile,y=iy*tile,bw=Math.min(tile,input.width-x),bh=Math.min(tile,input.height-y);
+      const sx=Math.max(0,x-pad),sy=Math.max(0,y-pad),tw=Math.min(input.width,x+bw+pad)-sx,th=Math.min(input.height,y+bh+pad)-sy;
+      const [c,cg]=newCanvas(tw,th);cg.fillStyle='#fff';cg.fillRect(0,0,tw,th);cg.drawImage(input,sx,sy,tw,th,0,0,tw,th);
+      let tensor,tc;
+      try{
+        tensor=await ai.upscale(c,{output:'tensor',patchSize:64,padding:8,signal:stopController.signal,awaitNextFrame:true});assertActive();
+        const pixels=await tensor.data(),ow=tw*factor,oh=th*factor;
+        let tg;[tc,tg]=newCanvas(ow,oh,true);tg.imageSmoothingQuality='high';tg.drawImage(input,sx,sy,tw,th,0,0,ow,oh);
+        const im=tg.getImageData(0,0,ow,oh);
+        for(let i=0;i<ow*oh;i++){const a=im.data[i*4+3]/255;for(let k=0;k<3;k++)im.data[i*4+k]=a>0.015?Math.max(0,Math.min(255,(pixels[i*3+k]-255*(1-a))/a)):0;}
+        tg.putImageData(im,0,0);g.drawImage(tc,(x-sx)*factor,(y-sy)*factor,bw*factor,bh*factor,x*factor,y*factor,bw*factor,bh*factor);
+      }finally{tensor?.dispose();disposeCanvas(c);disposeCanvas(tc);}
+      done++;el('progress').value=20+Math.round(done/(nx*ny)*65);log(`ESRGAN Thick：${done} / ${nx*ny} 区画`);await nextFrame();
+    }return out;
+  }catch(e){disposeCanvas(out);throw e;}
+}
+async function blendTextEdges(out,input){
+  // Conservative edge blending, not OCR and not text reconstruction.
+  const g=out.getContext('2d',{willReadFrequently:true}),w=out.width,h=out.height;
+  for(let y=0;y<h;y+=96){
+    assertActive();const sh=Math.min(96,h-y),pad=1,sy=Math.max(0,y-pad),ey=Math.min(h,y+sh+pad);
+    const [c,cg]=newCanvas(w,ey-sy,true);cg.imageSmoothingQuality='high';
+    const f=out.width/input.width;cg.drawImage(input,0,0,input.width,input.height,0,-sy,input.width*f,input.height*f);
+    const org=cg.getImageData(0,0,w,ey-sy).data,ai=g.getImageData(0,y,w,sh),d=ai.data;
+    const lum=i=>0.2126*org[i]+0.7152*org[i+1]+0.0722*org[i+2];
+    for(let yy=0;yy<sh;yy++)for(let x=0;x<w;x++){
+      const p=((yy+y-sy)*w+x)*4,di=(yy*w+x)*4;
+      const edge=Math.max(Math.abs(lum(p)-lum(p+(x<w-1?4:0))),Math.abs(lum(p)-lum(p-(x?4:0))),Math.abs(lum(p)-lum(Math.max(0,p-w*4))),Math.abs(lum(p)-lum(Math.min(org.length-4,p+w*4))));
+      const chroma=Math.max(org[p],org[p+1],org[p+2])-Math.min(org[p],org[p+1],org[p+2]);
+      const weight=Math.min(0.8,Math.max(0,(edge-5)/40))*(1-Math.min(0.8,chroma/255));
+      for(let k=0;k<3;k++)d[di+k]=d[di+k]*(1-weight)+org[p+k]*weight;
+    }
+    g.putImageData(ai,0,y);disposeCanvas(c);await nextFrame();
+  }
+}
+async function process(){
+  if(!srcImage||working||exporting)return;
+  const factor=Number(el('scale').value),mode=el('mode').value,protect=el('protectText').checked;
+  const w=srcImage.naturalWidth*factor,h=srcImage.naturalHeight*factor;
+  try{const [test]=newCanvas(w,h);disposeCanvas(test);}catch(e){log(e.message);return;}
+  working=true;stopController=new AbortController();clearResult();updateControls();fallbackNote='';
+  el('progress').value=0;el('progress').classList.remove('hidden');
+  const started=performance.now();let out;
+  try{
+    if(factor===1||mode==='faithful'){
+      let g;[out,g]=newCanvas(w,h,true);g.imageSmoothingQuality='high';g.drawImage(originalCanvas,0,0,w,h);markEngine('高品質補間（AIなし）');
+    }else if(mode==='photo'){
+      out=await scaleThick(originalCanvas,factor);
+    }else{
+      const key=mode==='flyer'?'realesrgan_fast':mode;
+      try{out=await scaleONNX(originalCanvas,key,factor);}
+      catch(e){
+        assertActive();if(e.name==='AbortError')throw e;
+        fallbackNote=`${MODELS[key].name}を利用できず代替AIで処理`;
+        log(fallbackNote+'…');
+        if(key==='realesrgan_pro'){
+          try{out=await scaleONNX(originalCanvas,'realesrgan_fast',factor);}
+          catch(e2){assertActive();if(e2.name==='AbortError')throw e2;out=await scaleThick(originalCanvas,factor);}
+        }else out=await scaleThick(originalCanvas,factor);
+      }
+    }
+    if(protect&&factor>1&&mode!=='faithful')await blendTextEdges(out,originalCanvas);
+    assertActive();baseCanvas=out;out=null;
+    processed={scale:factor,mode,protect,seconds:(performance.now()-started)/1000};
+    invalidateExport();el('progress').value=92;
+    await renderPreview();assertActive();
+    el('progress').value=100;
+    el('preview').classList.remove('hidden');el('empty').classList.add('hidden');el('detailPanel').classList.remove('hidden');
+    setSplit();refreshInfo();
+    el('engineInfo').textContent=`使用エンジン：${actualEngine}${fallbackNote?' ／ '+fallbackNote:''} ／ ${processed.seconds.toFixed(1)}秒${protect&&factor>1&&mode!=='faithful'?' ／ 文字周辺を原画像と合成':''}`;
+    log('完了しました。色を調整し、原寸の細部を確認して保存できます。'+(fallbackNote?'\n'+fallbackNote:''));
+  }catch(e){disposeCanvas(out);if(!processed||e.name==='AbortError')clearResult();log(e.name==='AbortError'?'処理を中止しました。':`処理エラー：${e.message}\n「AIなし」ならモデル取得なしで処理できます。`);}
+  finally{working=false;stopController=null;updateControls();}
+}
+
+// Same color function is used in the worker, crop inspection and full-resolution export.
+function gradePixels(src,w,h,p){
+  const n=w*h, tmp=new Float32Array(n*3), dst=new Uint8ClampedArray(n*4);
+  const clamp=x=>Math.max(0,Math.min(255,x));
+  const cf=Math.exp(p.contrast/100*1.65),norm=Math.tanh(cf),exposure=Math.pow(2,p.brightness/70),temp=p.temperature*0.7;
+  const tone=v=>{const u=Math.max(0,Math.min(1,v/255));let t=p.contrast===0?u:0.5+0.5*Math.tanh((u*2-1)*cf)/norm;t=1-Math.pow(1-t,exposure);return t*255;};
+  for(let i=0;i<n;i++){
+    const j=i*4,t=i*3;let r=tone(src[j]),g=tone(src[j+1]),b=tone(src[j+2]);
+    const mid=4*(g/255)*(1-g/255);r+=temp*mid;b-=temp*mid;
+    let l=clamp(r*0.2126+g*0.7152+b*0.0722);
+    const chroma=(Math.max(r,g,b)-Math.min(r,g,b))/255;
+    // Reduce vibrance on warm skin-like colors. Leave the manual saturation control available.
+    const skin=(r>g&&g>b&&r-b>12)?0.55:1;
+    let boost=Math.max(0,1+p.saturation/100+p.vibrance/100*(1-chroma)*1.3*skin);
+    const dr=r-l,dg=g-l,db=b-l;
+    let limit=100;
+    for(const d of [dr,dg,db])if(d>0)limit=Math.min(limit,(255-l)/d);else if(d<0)limit=Math.min(limit,-l/d);
+    if(boost>1){const room=Math.max(0,limit-1);boost=1+(boost-1)*room/(room+boost-1+1e-9);}else boost=Math.min(boost,limit);
+    // Keep floating-point values until sharpening has finished.
+    tmp[t]=clamp(l+dr*boost);tmp[t+1]=clamp(l+dg*boost);tmp[t+2]=clamp(l+db*boost);
+  }
+  const luma=i=>0.2126*tmp[i*3]+0.7152*tmp[i*3+1]+0.0722*tmp[i*3+2];
+  const amount=p.sharpness/100*1.3+p.clarity/100*0.35;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=y*w+x,j=i*4,t=i*3;let delta=0;
+    if(amount>0&&src[j+3]>0){
+      const center=luma(i);let sum=0,weights=0,lo=center,hi=center;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const ni=Math.max(0,Math.min(h-1,y+dy))*w+Math.max(0,Math.min(w-1,x+dx));
+        const a=src[ni*4+3]/255,weight=(dx===0?2:1)*(dy===0?2:1)*a,v=luma(ni);
+        sum+=v*weight;weights+=weight;if(a>0.5){lo=Math.min(lo,v);hi=Math.max(hi,v);}
+      }
+      const diff=center-(weights?sum/weights:center);
+      if(Math.abs(diff)>1.5){const sharpened=Math.max(lo,Math.min(hi,center+diff*amount));delta=sharpened-center;}
+    }
+    for(let k=0;k<3;k++)dst[j+k]=src[j+3]===0?0:clamp(tmp[t+k]+delta);
+    dst[j+3]=src[j+3];
+  }return dst;
+}
+let colorWorker=null, workerURL=null, workerId=0, workerJobs=new Map();
+function failWorker(){
+  colorWorker?.terminate();colorWorker=null;revoke(workerURL);workerURL=null;
+  for(const job of workerJobs.values())job.reject(Error('色補正ワーカーが停止しました。'));workerJobs.clear();
+}
+async function gradeAsync(data,w,h,p){
+  if(typeof Worker==='undefined')return gradePixels(data,w,h,p);
+  if(!colorWorker){
+    try{
+      workerURL=URL.createObjectURL(new Blob([`const gradePixels=${gradePixels.toString()};onmessage=e=>{try{const {id,data,w,h,p}=e.data;const out=gradePixels(data,w,h,p);postMessage({id,out},[out.buffer]);}catch(err){postMessage({id:e.data.id,error:err.message});}}`],{type:'text/javascript'}));
+      colorWorker=new Worker(workerURL);
+      colorWorker.onmessage=e=>{const job=workerJobs.get(e.data.id);if(!job)return;workerJobs.delete(e.data.id);e.data.error?job.reject(Error(e.data.error)):job.resolve(e.data.out);};
+      colorWorker.onerror=failWorker;
+    }catch{failWorker();return gradePixels(data,w,h,p);}
+  }
+  const backup=data.slice();
+  try{return await new Promise((resolve,reject)=>{const id=++workerId;workerJobs.set(id,{resolve,reject});colorWorker.postMessage({id,data,w,h,p},[data.buffer]);});}
+  catch{return gradePixels(backup,w,h,p);}
+}
+function updateSliderLabels(){for(const k of SLIDER_KEYS){const v=Number(el(k).value);el(k+'Val').textContent=(v>0&&!['clarity','sharpness'].includes(k)?'+':'')+v;}}
+function applyPreset(name,button){
+  for(const k of SLIDER_KEYS)el(k).value=PRESETS[name][k];updateSliderLabels();
+  for(const id of ['presetFlyer','presetShaki','presetText','presetNone'])el(id).classList.toggle('active',id===button);
+  colorChanged();
+}
+function colorChanged(){invalidateExport();schedulePreview();}
+function schedulePreview(){
+  clearTimeout(previewTimer);if(!baseCanvas)return;
+  previewTimer=setTimeout(()=>renderPreview().catch(e=>log('表示エラー：'+e.message)),90);
+}
+async function renderPreview(){
+  if(previewBusy||!baseCanvas)return;
+  previewBusy=true;
+  try{
+    while(baseCanvas&&renderedRevision!==revision){
+      const rev=revision,gen=generation,b=baseCanvas,p=params();
+      const factor=Math.min(1,1400/Math.max(b.width,b.height));
+      const w=Math.max(1,Math.round(b.width*factor)),h=Math.max(1,Math.round(b.height*factor));
+      const [c,g]=newCanvas(w,h,true);g.imageSmoothingQuality='high';g.drawImage(b,0,0,w,h);
+      const data=g.getImageData(0,0,w,h);const graded=await gradeAsync(data.data,w,h,p);
+      if(gen!==generation||rev!==revision){disposeCanvas(c);continue;}
+      g.putImageData(new ImageData(graded,w,h),0,0);
+      const blob=await asBlob(c);
+      if(gen!==generation||rev!==revision){disposeCanvas(c);continue;}
+      const [before,bg]=newCanvas(w,h,true);bg.imageSmoothingQuality='high';bg.drawImage(originalCanvas,0,0,w,h);
+      const beforeBlob=await asBlob(before);
+      if(gen!==generation||rev!==revision){disposeCanvas(c);disposeCanvas(before);continue;}
+      disposeCanvas(previewCanvas);disposeCanvas(beforePreview);previewCanvas=c;beforePreview=before;
+      revoke(previewUrl);revoke(beforeUrl);previewUrl=URL.createObjectURL(blob);beforeUrl=URL.createObjectURL(beforeBlob);
+      el('after').src=previewUrl;el('before').src=beforeUrl;
+      renderedRevision=rev;el('resultInfo').textContent=`処理済み：${b.width.toLocaleString()} × ${b.height.toLocaleString()} px ／ 保存時に原寸で色補正します。`;
+      await renderDetail();
+    }
+  }finally{previewBusy=false;}
+}
+async function renderDetail(){
+  if(!baseCanvas||!originalCanvas)return;const seq=++detailSequence,gen=generation,p=params();
+  const w=Math.min(256,baseCanvas.width),h=Math.min(160,baseCanvas.height),pad=1;
+  const x=Math.max(0,Math.min(baseCanvas.width-w,Math.round(lensX*baseCanvas.width-w/2))),y=Math.max(0,Math.min(baseCanvas.height-h,Math.round(lensY*baseCanvas.height-h/2)));
+  const sx=Math.max(0,x-pad),sy=Math.max(0,y-pad),ex=Math.min(baseCanvas.width,x+w+pad),ey=Math.min(baseCanvas.height,y+h+pad);
+  const [c,g]=newCanvas(ex-sx,ey-sy,true);g.drawImage(baseCanvas,sx,sy,c.width,c.height,0,0,c.width,c.height);
+  const im=g.getImageData(0,0,c.width,c.height),d=await gradeAsync(im.data,c.width,c.height,p);
+  if(seq!==detailSequence||gen!==generation){disposeCanvas(c);return;}
+  g.putImageData(new ImageData(d,c.width,c.height),0,0);
+  const ac=el('detailAfter'),bc=el('detailBefore');for(const cc of [ac,bc]){cc.width=w;cc.height=h;}
+  ac.getContext('2d').drawImage(c,x-sx,y-sy,w,h,0,0,w,h);
+  const bg=bc.getContext('2d');bg.imageSmoothingQuality='high';bg.drawImage(originalCanvas,0,0,originalCanvas.width,originalCanvas.height,-x,-y,baseCanvas.width,baseCanvas.height);
+  disposeCanvas(c);
+  el('detailLabel').textContent=`原寸比較（1画素＝1画素）：位置 ${x}, ${y} ／ 画像をクリックして確認箇所を移動`;
+}
+function setSplit(){const v=Number(el('comparison').value);el('before').style.clipPath=`inset(0 ${100-v}% 0 0)`;el('splitLine').style.left=v+'%';el('comparisonValue').textContent=v+'%';}
+async function gradeFull(base,p){
+  const [out,g]=newCanvas(base.width,base.height,true),src=base.getContext('2d',{willReadFrequently:true});
+  try{
+    for(let y=0;y<base.height;y+=96){
+      const rows=Math.min(96,base.height-y),sy=Math.max(0,y-1),ey=Math.min(base.height,y+rows+1);
+      const im=src.getImageData(0,sy,base.width,ey-sy),d=await gradeAsync(im.data,im.width,im.height,p);
+      g.putImageData(new ImageData(d,im.width,im.height),0,sy,0,y-sy,base.width,rows);
+      log(`原寸の色補正・保存準備中：${Math.round((y+rows)/base.height*100)}%`);await nextFrame();
+    }return out;
+  }catch(e){disposeCanvas(out);throw e;}
+}
+function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0);}return(c^0xffffffff)>>>0;}
+async function injectPngDpi(blob,dpi){
+  const b=new Uint8Array(await blob.arrayBuffer()),sig=[137,80,78,71,13,10,26,10];
+  if(!sig.every((v,i)=>b[i]===v))throw Error('PNG形式を確認できませんでした。');
+  const chunk=new Uint8Array(21),v=new DataView(chunk.buffer);v.setUint32(0,9);chunk.set([112,72,89,115],4);
+  const ppm=Math.round(dpi/0.0254);v.setUint32(8,ppm);v.setUint32(12,ppm);chunk[16]=1;v.setUint32(17,crc32(chunk.subarray(4,17)));
+  const parts=[b.subarray(0,8)];let pos=8,inserted=false;
+  while(pos+12<=b.length){const n=new DataView(b.buffer,b.byteOffset+pos,4).getUint32(0),end=pos+12+n;if(end>b.length)throw Error('PNGデータが不完全です。');
+    const type=String.fromCharCode(...b.subarray(pos+4,pos+8));
+    if(type!=='pHYs')parts.push(b.subarray(pos,end));
+    if(type==='IHDR'&&!inserted){parts.push(chunk);inserted=true;}pos=end;
+  }return new Blob(parts,{type:'image/png'});
+}
+async function buildExport(){
+  const rev=revision,base=baseCanvas,p=params(),type=el('format').value;
+  const geom=exportGeometry(base.width,base.height),embed=el('embedDpi').checked;
+  // Validate before allocating and processing the full image.
+  const [check]=newCanvas(geom.w,geom.h);disposeCanvas(check);
+  let graded,out;
+  try{
+    graded=await gradeFull(base,p);out=graded;
+    if(geom.layout!=='native'||type==='image/jpeg'){
+      let g;[out,g]=newCanvas(geom.w,geom.h);g.fillStyle='#fff';g.fillRect(0,0,out.width,out.height);
+      g.imageSmoothingQuality='high';
+      const f=geom.layout==='cover'?Math.max(out.width/graded.width,out.height/graded.height):Math.min(out.width/graded.width,out.height/graded.height);
+      const w=graded.width*f,h=graded.height*f;g.drawImage(graded,(out.width-w)/2,(out.height-h)/2,w,h);
+    }
+    let blob=await asBlob(out,type,1);if(blob.type!==type)throw Error('このブラウザは選択形式の保存に対応していません。PNGを選んでください。');
+    if(type==='image/png'&&embed)blob=await injectPngDpi(blob,geom.dpi);
+    const ext=type==='image/png'?'png':type==='image/webp'?'webp':'jpg';
+    const tag=geom.layout==='native'?`${processed.scale}x`:`${el('paper').value}_${geom.layout}`;
+    const dpiTag=type==='image/png'&&embed?`_${geom.dpi}dpi`:'';
+    const filename=`${fileBase}_gokusai_${tag}${dpiTag}.${ext}`;
+    if(rev!==revision)throw Error('設定が変わりました。もう一度保存してください。');
+    revoke(exportCache?.url);exportCache={blob,filename,url:URL.createObjectURL(blob),rev};
+    el('directDownloadLink').href=exportCache.url;el('directDownloadLink').download=filename;
+    el('directDownloadLink').textContent=`${filename}（${(blob.size/1048576).toFixed(2)} MB）を保存`;
+    el('saveReadyImg').src=exportCache.url;el('saveFallbackBox').classList.remove('hidden');
+    el('resultInfo').textContent=`保存画像：${geom.w.toLocaleString()} × ${geom.h.toLocaleString()} px ／ ${(blob.size/1048576).toFixed(2)} MB`;
+    return exportCache;
+  }finally{if(out!==graded)disposeCanvas(out);disposeCanvas(graded);}
+}
+async function saveImage(){
+  if(working||exporting||!baseCanvas||!geometryCurrent())return;
+  exporting=true;updateControls();
+  try{
+    // Request a handle while user activation is still live; build bytes afterwards.
+    let handle=null;
+    const type=el('format').value,ext=type==='image/png'?'png':type==='image/webp'?'webp':'jpg';
+    if(window.showSaveFilePicker){
+      try{handle=await showSaveFilePicker({suggestedName:`${fileBase}_gokusai.${ext}`,types:[{description:'画像',accept:{[type]:['.'+ext]}}]});}
+      catch(e){if(e.name==='AbortError')return;}
+    }
+    const built=exportCache?.rev===revision?exportCache:await buildExport();
+    if(handle){const wr=await handle.createWritable();await wr.write(built.blob);await wr.close();log('画像を保存しました。');}
+    else{
+      const a=document.createElement('a');a.href=built.url;a.download=built.filename;document.body.appendChild(a);a.click();a.remove();
+      log('保存用画像を作成しました。保存が始まらない場合は、下の保存リンクを押してください。');
+    }
+  }catch(e){log('保存エラー：'+e.message);}
+  finally{exporting=false;updateControls();}
+}
+el('file').addEventListener('change',e=>openFile(e.target.files[0]));
+el('drop').addEventListener('dragover',e=>{e.preventDefault();if(!working&&!exporting)el('drop').classList.add('over');});
+el('drop').addEventListener('dragleave',()=>el('drop').classList.remove('over'));
+el('drop').addEventListener('drop',e=>{e.preventDefault();el('drop').classList.remove('over');openFile(e.dataTransfer.files[0]);});
+el('run').addEventListener('click',process);el('save').addEventListener('click',saveImage);
+el('cancel').addEventListener('click',()=>{stopController?.abort();for(const ai of upscalers.values())ai.abort?.();log('中止を要求しました。現在の区画処理が終わると停止します。');});
+el('comparison').addEventListener('input',setSplit);
+el('mode').addEventListener('change',()=>{invalidateExport();modeText();refreshInfo();});
+for(const id of ['scale','protectText'])el(id).addEventListener('change',()=>{invalidateExport();refreshInfo();});
+for(const id of ['paper','layout','dpi','format','embedDpi'])el(id).addEventListener('change',()=>{invalidateExport();refreshInfo();});
+for(const k of SLIDER_KEYS)el(k).addEventListener('input',()=>{updateSliderLabels();for(const id of ['presetFlyer','presetShaki','presetText','presetNone'])el(id).classList.remove('active');colorChanged();});
+for(const [id,name] of [['presetFlyer','flyer'],['presetShaki','shaki'],['presetText','text'],['presetNone','none']])el(id).addEventListener('click',()=>applyPreset(name,id));
+el('resetColor').addEventListener('click',()=>applyPreset('flyer','presetFlyer'));
+el('purpose').addEventListener('change',()=>{
+  const v=el('purpose').value;el('protectText').checked=v==='flyer';el('mode').value=v==='flyer'?'flyer':'realesrgan_pro';
+  applyPreset(v==='flyer'?'flyer':v==='photo'?'shaki':'flyer',v==='photo'?'presetShaki':'presetFlyer');modeText();refreshInfo();
+});
+el('preview').addEventListener('click',e=>{
+  const r=el('preview').getBoundingClientRect();lensX=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));lensY=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+  clearTimeout(detailTimer);detailTimer=setTimeout(()=>renderDetail().catch(e=>log(e.message)),50);
+});
+let held=50;
+el('holdCompare').addEventListener('pointerdown',e=>{held=Number(el('comparison').value);el('comparison').value=100;setSplit();e.currentTarget.setPointerCapture(e.pointerId);});
+const releaseHold=()=>{el('comparison').value=held;setSplit();};
+el('holdCompare').addEventListener('pointerup',releaseHold);el('holdCompare').addEventListener('pointercancel',releaseHold);
+el('holdCompare').addEventListener('keydown',e=>{if(e.key===' '&&!e.repeat){e.preventDefault();held=Number(el('comparison').value);el('comparison').value=100;setSplit();}});
+el('holdCompare').addEventListener('keyup',e=>{if(e.key===' ')releaseHold();});
+el('downloadAppHtml').addEventListener('click',()=>{
+  const u=URL.createObjectURL(new Blob([APP_HTML],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='gokusai.html';a.click();setTimeout(()=>revoke(u),30000);
+});
+el('loadSampleFlyer').addEventListener('click',()=>loadSampleImage('flyer'));
+el('loadSamplePhoto').addEventListener('click',()=>loadSampleImage('photo'));
+window.addEventListener('beforeunload',()=>{failWorker();for(const {session} of sessions.values())session.release?.();});
+applyPreset('flyer','presetFlyer');modeText();setSplit();updateControls();detectHardware();
+
+async function loadSampleImage(kind) {
+  if (working || exporting) return;
+  const w = 640, h = 452; // A-series ratio (approx 1.414:1)
+  const [c, g] = newCanvas(w, h);
+  if (kind === 'flyer') {
+    // Slightly muted/compressed flyer image simulating ChatGPT flyer output
+    const grad = g.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, '#3a4f6e');
+    grad.addColorStop(0.55, '#594263');
+    grad.addColorStop(1, '#6e4838');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, w, h);
+
+    // Decorative circles
+    g.fillStyle = 'rgba(235, 185, 95, 0.28)';
+    g.beginPath(); g.arc(520, 110, 95, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(95, 195, 225, 0.25)';
+    g.beginPath(); g.arc(110, 360, 120, 0, Math.PI * 2); g.fill();
+
+    // Flyer Card
+    g.fillStyle = 'rgba(248, 244, 234, 0.92)';
+    g.fillRect(36, 32, w - 72, h - 64);
+
+    // Header Banner
+    g.fillStyle = '#c84b31';
+    g.fillRect(36, 32, w - 72, 68);
+    g.fillStyle = '#fff8ee';
+    g.font = 'bold 27px sans-serif';
+    g.fillText('TAKARAZUKA 創業・経営革新フェア', 62, 76);
+
+    // Main Headline
+    g.fillStyle = '#222831';
+    g.font = 'bold 34px sans-serif';
+    g.fillText('AI×高彩度A3チラシ印刷テスト', 60, 152);
+
+    // Sub-copy & fine text
+    g.fillStyle = '#394867';
+    g.font = 'bold 18px sans-serif';
+    g.fillText('● AI超解像で細部を推定、色と輪郭を仕上げる', 62, 195);
+    g.fillText('● 鮮やかさと文字の読みやすさを原寸で比較', 62, 225);
+
+    // Color swatches inside flyer
+    const colors = ['#d65a31', '#2d9596', '#eab308', '#7c3aed', '#16a34a'];
+    colors.forEach((col, idx) => {
+      g.fillStyle = col;
+      g.fillRect(62 + idx * 102, 250, 88, 64);
+      g.fillStyle = '#ffffff';
+      g.font = 'bold 13px monospace';
+      g.fillText(col.toUpperCase(), 72 + idx * 102, 287);
+    });
+
+    // Footer info box
+    g.fillStyle = '#1e293b';
+    g.fillRect(62, 336, w - 124, 62);
+    g.fillStyle = '#f8fafc';
+    g.font = 'bold 19px sans-serif';
+    g.fillText('日時：11月15日(日) 10:00-17:00 ｜ 会場：宝塚商工会議所 ホール', 78, 374);
+  } else {
+    // Photo-style scenic landscape + portrait warmth
+    const sky = g.createLinearGradient(0, 0, 0, h * 0.65);
+    sky.addColorStop(0, '#2c5364');
+    sky.addColorStop(0.5, '#203a43');
+    sky.addColorStop(1, '#d38312');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, w, h);
+
+    // Sun
+    const sun = g.createRadialGradient(460, 170, 8, 460, 170, 85);
+    sun.addColorStop(0, '#fff7d6');
+    sun.addColorStop(0.4, '#f59e0b');
+    sun.addColorStop(1, 'rgba(245,158,11,0)');
+    g.fillStyle = sun;
+    g.beginPath(); g.arc(460, 170, 85, 0, Math.PI * 2); g.fill();
+
+    // Mountains
+    g.fillStyle = '#1e293b';
+    g.beginPath();
+    g.moveTo(0, 310); g.lineTo(140, 180); g.lineTo(290, 275); g.lineTo(430, 155); g.lineTo(640, 290); g.lineTo(640, h); g.lineTo(0, h);
+    g.fill();
+
+    // Foreground vibrant foliage cards
+    g.fillStyle = '#134e4a';
+    g.fillRect(0, 310, w, h - 310);
+    g.fillStyle = '#f97316';
+    g.font = 'bold 26px sans-serif';
+    g.fillText('PHOTO VIVID ENHANCE SAMPLE', 40, 365);
+    g.fillStyle = '#e2e8f0';
+    g.font = '16px sans-serif';
+    g.fillText('風景・商品写真のディテールと彩度をシャキッと引き上げます', 40, 398);
+  }
+
+  const blob = await asBlob(c, 'image/jpeg', 0.82); // Slight compression to show AI restoration power
+  const file = new File([blob], kind === 'flyer' ? 'sample_flyer_A3.jpg' : 'sample_photo.jpg', { type: 'image/jpeg' });
+  await openFile(file);
+}
+
+
+// Native PNG workflow. No cropping, rotation or paper fitting is applied.
+exportGeometry=function(w,h){return {w,h,dpi:300,layout:'native'};};
+refreshInfo=function(){
+ if(!srcImage)return;const f=Number(el('scale').value),w=srcImage.naturalWidth*f,h=srcImage.naturalHeight*f;
+ el('targetInfo').textContent=`${srcImage.naturalWidth.toLocaleString()} × ${srcImage.naturalHeight.toLocaleString()} → ${w.toLocaleString()} × ${h.toLocaleString()} px ／ 縦横比・向き・構図を保持`;
+ if(baseCanvas&&!geometryCurrent())log('拡大条件が変わりました。「高画質化を開始」で反映してください。');updateControls();
+};
+const rawParams=params;
+params=function(){const p=rawParams(),strength=Number(el('overall').value)/100;return Object.fromEntries(Object.entries(p).map(([k,v])=>[k,v*strength]));};
+function finishState(){return {...rawParams(),overall:Number(el('overall').value)};}
+let historyStates=[finishState()],historyIndex=0,historyTimer=null,restoring=false,slotA=null,slotB=null,viewingA=false;
+function updateHistory(){el('undoColor').disabled=working||exporting||historyIndex===0;el('redoColor').disabled=working||exporting||historyIndex>=historyStates.length-1;el('showA').disabled=working||exporting||!slotA||viewingA;el('showB').disabled=working||exporting||!viewingA;}
+function commitHistory(){clearTimeout(historyTimer);if(restoring)return;const state=finishState();if(JSON.stringify(historyStates[historyIndex])===JSON.stringify(state))return;historyStates=historyStates.slice(0,historyIndex+1);historyStates.push(state);if(historyStates.length>80)historyStates.shift();historyIndex=historyStates.length-1;updateHistory();}
+const originalChanged=colorChanged;
+colorChanged=function(){
+ if(!restoring&&viewingA){viewingA=false;el('abStatus').textContent='Aを基に新しい仕上げを調整中。Aの記憶は保持しています。';}
+ originalChanged();if(!restoring){clearTimeout(historyTimer);historyTimer=setTimeout(commitHistory,250);}updateHistory();
+};
+function applyState(state){restoring=true;for(const k of SLIDER_KEYS)el(k).value=state[k];el('overall').value=Number.isFinite(state.overall)?Math.max(0,Math.min(100,state.overall)):100;el('overallValue').textContent=el('overall').value+'%';updateSliderLabels();for(const id of ['presetFlyer','presetShaki','presetText','presetNone'])el(id).classList.remove('active');colorChanged();restoring=false;updateHistory();}
+el('overall').addEventListener('input',()=>{el('overallValue').textContent=el('overall').value+'%';colorChanged();});
+for(const k of [...SLIDER_KEYS,'overall'])el(k).addEventListener('change',commitHistory);
+el('undoColor').onclick=()=>{commitHistory();if(historyIndex>0){viewingA=false;applyState(historyStates[--historyIndex]);}};
+el('redoColor').onclick=()=>{clearTimeout(historyTimer);if(historyIndex<historyStates.length-1){viewingA=false;applyState(historyStates[++historyIndex]);}};
+el('pinA').onclick=()=>{commitHistory();slotA=finishState();slotB=null;viewingA=false;el('abStatus').textContent='Aを記憶しました。調整後に「Aを見る」で比較できます。';updateHistory();};
+el('showA').onclick=()=>{commitHistory();slotB=finishState();viewingA=true;applyState(slotA);el('abStatus').textContent='Aを表示中。保存するとAの仕上げで保存します。';};
+el('showB').onclick=()=>{viewingA=false;applyState(slotB);el('abStatus').textContent='B（調整していた仕上げ）を表示中。';};
+let favorites=[];try{const saved=JSON.parse(localStorage.getItem('gokusai-favorites-v1')||'[]');if(Array.isArray(saved))favorites=saved.filter(x=>x&&typeof x.name==='string'&&x.state&&SLIDER_KEYS.every(k=>Number.isFinite(x.state[k]))).slice(0,50);}catch{}
+function favoritesUI(){el('favorites').replaceChildren(new Option('お気に入りを選択',''));favorites.forEach((f,i)=>el('favorites').add(new Option(f.name,String(i))));}
+function persistFavorites(){try{localStorage.setItem('gokusai-favorites-v1',JSON.stringify(favorites));el('favoriteStatus').textContent='この端末・ブラウザに保存しました。';}catch{el('favoriteStatus').textContent='端末への保存が許可されていません。この画面を開いている間だけ利用できます。';}favoritesUI();}
+el('saveFavorite').onclick=()=>{const name=el('favoriteName').value.trim();if(!name){el('favoriteStatus').textContent='仕上げの名前を入力してください。';el('favoriteName').focus();return;}const existing=favorites.findIndex(f=>f.name===name);const item={name,state:finishState()};if(existing>=0)favorites[existing]=item;else if(favorites.length<50)favorites.push(item);else{el('favoriteStatus').textContent='登録は50件までです。不要な設定を削除してください。';return;}persistFavorites();};
+el('loadFavorite').onclick=()=>{if(el('favorites').value==='')return;commitHistory();viewingA=false;applyState(favorites[Number(el('favorites').value)].state);commitHistory();};
+el('deleteFavorite').onclick=()=>{if(el('favorites').value==='')return;favorites.splice(Number(el('favorites').value),1);persistFavorites();};
+for(const [id,name] of [['candidateNatural','shaki'],['candidateVivid','flyer'],['candidateGokusai','flyer']])el(id).onclick=()=>{commitHistory();el('overall').value=100;el('overallValue').textContent='100%';applyPreset(name,null);if(id==='candidateGokusai'){el('vibrance').value=60;el('saturation').value=40;updateSliderLabels();colorChanged();}commitHistory();};
+// Keep the small screen responsive during full processing and saving.
+const oldControls=updateControls;
+updateControls=function(){oldControls();const busy=working||exporting;for(const id of ['overall','pinA','saveFavorite','loadFavorite','deleteFavorite','candidateNatural','candidateVivid','candidateGokusai'])el(id).disabled=busy;updateHistory();};
+
+// Existing run listener calls process directly; reset comparison slots when a result is cleared.
+const oldClear=clearResult;clearResult=function(){slotA=null;slotB=null;viewingA=false;el('abStatus').textContent='Aに記憶してから調整すると、仕上げを比べられます。';oldClear();};
+// Clipboard image paste is optional; file selection remains available on every device.
+window.addEventListener('paste',e=>{if(working||exporting||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;const item=Array.from(e.clipboardData?.items||[]).find(i=>i.type.startsWith('image/'));if(item){const f=item.getAsFile();if(f){e.preventDefault();openFile(f);}}});
+favoritesUI();updateHistory();updateControls();
+
+
+const originalPreset=applyPreset;
+applyPreset=function(name,id){el('overall').value=100;el('overallValue').textContent='100%';originalPreset(name,id);};
+for(const id of ['candidateNatural','candidateVivid','candidateGokusai']){const c=document.createElement('canvas');c.width=160;c.height=100;c.style.cssText='display:block;width:100%;height:auto;margin-bottom:6px;border-radius:5px';el(id).prepend(c);}
+let candidateGeneration=-1;
+function renderCandidates(){if(!baseCanvas||candidateGeneration===generation)return;candidateGeneration=generation;
+ const f=Math.min(1,160/baseCanvas.width,100/baseCanvas.height),w=Math.max(1,Math.round(baseCanvas.width*f)),h=Math.max(1,Math.round(baseCanvas.height*f));
+ const [c,g]=newCanvas(w,h,true);g.drawImage(baseCanvas,0,0,w,h);const src=g.getImageData(0,0,w,h).data;
+ for(const [id,p] of [['candidateNatural',PRESETS.shaki],['candidateVivid',PRESETS.flyer],['candidateGokusai',{...PRESETS.flyer,vibrance:60,saturation:40}]]){const out=el(id).querySelector('canvas');out.width=w;out.height=h;out.getContext('2d').putImageData(new ImageData(gradePixels(src,w,h,p),w,h),0,0);}disposeCanvas(c);
+}
+const oldRenderPreview=renderPreview;
+renderPreview=async function(){await oldRenderPreview();renderCandidates();};
+
+</script>
+</body>
+</html>
