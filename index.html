@@ -411,7 +411,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{ou
   <div class="title-wrap">
     <h1>
       超高彩度画像変換ツール<br><strong class="brand">極彩<span>ーゴクサイー</span></strong>
-      <span class="badge">GOKUSAI 3.1 · AI超解像 × 鮮やかな仕上げ</span>
+      <span class="badge">GOKUSAI 3.2 · AI超解像 × 鮮やかな仕上げ</span>
     </h1>
     <p class="lead">鮮やかに、細部まで。写真・チラシ・イラストを、ブラウザ内で高画質化。画像ファイルはアップロードしません。AIモデルの取得にはネット接続が必要です。</p>
   </div>
@@ -991,10 +991,12 @@ function applyPreset(name,button){
 function colorChanged(){invalidateExport();schedulePreview();}
 function schedulePreview(){
   clearTimeout(previewTimer);if(!baseCanvas)return;
+  el('resultInfo').textContent='プレビューを更新しています…';
   previewTimer=setTimeout(()=>renderPreview().catch(e=>log('表示エラー：'+e.message)),90);
 }
 async function renderPreview(){
-  if(previewBusy||!baseCanvas)return;
+  while(previewBusy) await nextFrame();
+  if(!baseCanvas)return;
   previewBusy=true;
   try{
     while(baseCanvas&&renderedRevision!==revision){
@@ -1013,7 +1015,7 @@ async function renderPreview(){
       disposeCanvas(previewCanvas);disposeCanvas(beforePreview);previewCanvas=c;beforePreview=before;
       revoke(previewUrl);revoke(beforeUrl);previewUrl=URL.createObjectURL(blob);beforeUrl=URL.createObjectURL(beforeBlob);
       el('after').src=previewUrl;el('before').src=beforeUrl;
-      renderedRevision=rev;el('resultInfo').textContent=`処理済み：${b.width.toLocaleString()} × ${b.height.toLocaleString()} px ／ 保存時に原寸で色補正します。`;
+      renderedRevision=rev;el('resultInfo').textContent=processed ? `処理済み：${b.width.toLocaleString()} × ${b.height.toLocaleString()} px ／ 保存時に原寸で色補正します。` : '仕上がりをプレビュー中。保存するには高画質化を開始してください。';
       await renderDetail();
     }
   }finally{previewBusy=false;}
@@ -1294,6 +1296,24 @@ function renderCandidates(){if(!baseCanvas||candidateGeneration===generation)ret
 }
 const oldRenderPreview=renderPreview;
 renderPreview=async function(){await oldRenderPreview();renderCandidates();};
+
+
+// Show an editable, non-AI preview as soon as a source image is selected.
+const originalOpenFile=openFile;
+openFile=async function(file){
+  await originalOpenFile(file);
+  if(!srcImage||!originalCanvas||working||baseCanvas)return;
+  const [previewBase,g]=newCanvas(originalCanvas.width,originalCanvas.height,true);
+  g.drawImage(originalCanvas,0,0);baseCanvas=previewBase;processed=null;
+  el('engineInfo').textContent='プレビュー：元画像に仕上げを適用中（AI高画質化は開始前）';
+  el('preview').classList.remove('hidden');el('empty').classList.add('hidden');el('detailPanel').classList.remove('hidden');
+  el('comparison').value=0;setSplit();updateControls();
+  try{await renderPreview();}catch(e){log('プレビューの表示エラー：'+e.message);}
+  updateControls();
+};
+// A chosen finish should be visible across the entire image. The comparison slider remains available.
+function revealFinish(){if(!baseCanvas)return;el('comparison').value=0;setSplit();}
+for(const id of ['candidateNatural','candidateVivid','candidateGokusai','presetFlyer','presetShaki','presetText','presetNone','resetColor','showA','showB','loadFavorite','undoColor','redoColor'])el(id).addEventListener('click',revealFinish);
 
 </script>
 </body>
